@@ -13,19 +13,27 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
         function App() {
-            const [meds, setMeds] = useState([
-                { id: 1, name: "Lisinopril", dose: "10mg", stock: 30, time: "08:00", taken: false },
-                { id: 2, name: "Metformin", dose: "500mg", stock: 12, time: "08:00", taken: false },
-                { id: 3, name: "Prilinda", dose: "0.25", stock: 4, time: "10:00", taken: false }
-            ]);
+            // Učitavamo podatke iz "sefa" (localStorage) čim se aplikacija pokrene
+            const [meds, setMeds] = useState(() => {
+                const saved = localStorage.getItem("myMeds");
+                return saved ? JSON.parse(saved) : [
+                    { id: 1, name: "Lisinopril", dose: "10mg", stock: 30, time: "08:00", taken: false }
+                ];
+            });
+
             const [showForm, setShowForm] = useState(false);
             const [form, setForm] = useState({ name: "", dose: "", stock: 30, time: "08:00" });
 
+            // Svaki put kad se "meds" promeni, automatski se čuva u "sefu"
+            useEffect(() => {
+                localStorage.setItem("myMeds", JSON.stringify(meds));
+            }, [meds]);
+
             const toggleTaken = (id) => {
-                setMeds(meds.map(m => m.id === id ? { ...m, taken: !m.taken, stock: !m.taken ? m.stock - 1 : m.stock + 1 } : m));
+                setMeds(meds.map(m => m.id === id ? { ...m, taken: !m.taken, stock: !m.taken ? Math.max(0, m.stock - 1) : m.stock + 1 } : m));
             };
 
             const addMed = () => {
@@ -48,7 +56,7 @@
                                 <span style={{ color: med.stock <= 5 ? "#ff6b6b" : "#7c6a9e", fontWeight: "bold" }}>{med.stock} preostalo</span>
                             </div>
                             <div style={{ color: "#7c6a9e", marginBottom: "12px", fontSize: "16px" }}>{med.dose}</div>
-                            <div style={{ background: "#10b981", display: "inline-block", padding: "6px 15px", borderRadius: "10px", fontWeight: "bold", color: "black" }}>
+                            <div style={{ background: "#10b981", display: "inline-block", padding: "6px 15px", borderRadius: "10px", fontWeight: "bold", color: "white" }}>
                                 {med.time} {med.taken ? "✅" : "⭕"}
                             </div>
                         </div>
