@@ -2,7 +2,7 @@
 <html lang="sr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoseTrack</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -15,64 +15,46 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        function App() {
-            // Učitavamo podatke iz "sefa" (localStorage) čim se aplikacija pokrene
-            const [meds, setMeds] = useState(() => {
-                const saved = localStorage.getItem("myMeds");
-                return saved ? JSON.parse(saved) : [
-                    { id: 1, name: "Lisinopril", dose: "10mg", stock: 30, time: "08:00", taken: false }
-                ];
-            });
+        const translations = {
+            en: { title: "DoseTrack", add: "+ Add", remaining: "left", medName: "Medicine Name", dose: "Dose", stock: "Stock", save: "Save", newMed: "New Medicine" },
+            sr: { title: "DoseTrack", add: "+ Dodaj", remaining: "preostalo", medName: "Ime leka", dose: "Doza", stock: "Zaliha", save: "Sačuvaj", newMed: "Novi lek" }
+        };
 
+        function App() {
+            const [lang, setLang] = useState('sr');
+            const t = translations[lang];
+            const [meds, setMeds] = useState(() => JSON.parse(localStorage.getItem("myMeds")) || []);
             const [showForm, setShowForm] = useState(false);
             const [form, setForm] = useState({ name: "", dose: "", stock: 30, time: "08:00" });
 
-            // Svaki put kad se "meds" promeni, automatski se čuva u "sefu"
-            useEffect(() => {
-                localStorage.setItem("myMeds", JSON.stringify(meds));
-            }, [meds]);
-
-            const toggleTaken = (id) => {
-                setMeds(meds.map(m => m.id === id ? { ...m, taken: !m.taken, stock: !m.taken ? Math.max(0, m.stock - 1) : m.stock + 1 } : m));
-            };
-
-            const addMed = () => {
-                if(!form.name) return;
-                setMeds([...meds, { id: Date.now(), ...form, stock: parseInt(form.stock), taken: false }]);
-                setShowForm(false);
-            };
+            useEffect(() => { localStorage.setItem("myMeds", JSON.stringify(meds)); }, [meds]);
 
             return (
                 <div style={{ width: "100%", padding: "20px", boxSizing: "border-box" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" }}>
-                        <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0 }}>DoseTrack</h1>
-                        <button onClick={() => setShowForm(true)} style={{ background: "#a78bfa", padding: "10px 20px", borderRadius: "12px", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px" }}>+ Dodaj</button>
+                        <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>{t.title}</h1>
+                        <div>
+                            <button onClick={() => setLang(lang === 'en' ? 'sr' : 'en')} style={{ marginRight: "10px", background: "#333", padding: "5px 10px", borderRadius: "5px" }}>
+                                {lang === 'en' ? '🇷🇸 SR' : '🇬🇧 EN'}
+                            </button>
+                            <button onClick={() => setShowForm(true)} style={{ background: "#a78bfa", padding: "10px 20px", borderRadius: "12px" }}>{t.add}</button>
+                        </div>
                     </div>
 
                     {meds.map(med => (
-                        <div key={med.id} onClick={() => toggleTaken(med.id)} style={{ background: "#19142e", padding: "20px", marginBottom: "15px", borderRadius: "16px", border: med.stock <= 5 ? "2px solid #ff6b6b" : "none" }}>
+                        <div key={med.id} style={{ background: "#19142e", padding: "20px", marginBottom: "15px", borderRadius: "16px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
                                 <span style={{ fontWeight: "bold", fontSize: "20px" }}>{med.name}</span>
-                                <span style={{ color: med.stock <= 5 ? "#ff6b6b" : "#7c6a9e", fontWeight: "bold" }}>{med.stock} preostalo</span>
-                            </div>
-                            <div style={{ color: "#7c6a9e", marginBottom: "12px", fontSize: "16px" }}>{med.dose}</div>
-                            <div style={{ background: "#10b981", display: "inline-block", padding: "6px 15px", borderRadius: "10px", fontWeight: "bold", color: "white" }}>
-                                {med.time} {med.taken ? "✅" : "⭕"}
+                                <span>{med.stock} {t.remaining}</span>
                             </div>
                         </div>
                     ))}
 
                     {showForm && (
-                        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#0f0c1a", padding: "20px", boxSizing: "border-box", zIndex: 1000 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                                <h2 style={{ margin: 0, fontSize: "24px" }}>Novi lek</h2>
-                                <button onClick={() => setShowForm(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: "30px", cursor: "pointer" }}>✕</button>
-                            </div>
-                            <input placeholder="Ime leka" onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
-                            <input placeholder="Doza" onChange={e => setForm({...form, dose: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
-                            <input type="number" placeholder="Zaliha" onChange={e => setForm({...form, stock: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
-                            <input type="time" onChange={e => setForm({...form, time: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
-                            <button onClick={addMed} style={{ width: "100%", padding: "15px", background: "#a78bfa", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "18px" }}>Sačuvaj</button>
+                        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#0f0c1a", padding: "20px" }}>
+                            <h2>{t.newMed}</h2>
+                            <input placeholder={t.medName} onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "10px", background: "#19142e", color: "white" }} />
+                            <button onClick={() => { setMeds([...meds, { id: Date.now(), ...form }]); setShowForm(false); }} style={{ width: "100%", padding: "15px", background: "#a78bfa" }}>{t.save}</button>
                         </div>
                     )}
                 </div>
