@@ -20,7 +20,6 @@
                 const saved = localStorage.getItem("myMeds");
                 return saved ? JSON.parse(saved) : [];
             });
-
             const [showForm, setShowForm] = useState(false);
             const [form, setForm] = useState({ name: "", dose: "", stock: 30, time: "08:00" });
 
@@ -63,7 +62,7 @@
                         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#0f0c1a", padding: "20px", boxSizing: "border-box", zIndex: 1000 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                                 <h2 style={{ margin: 0, fontSize: "24px" }}>Novi lek</h2>
-                                <button onClick={() => setShowForm(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: "30px", cursor: "pointer" }}>✕</button>
+                                <button onClick={() => setShowForm(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: "40px", cursor: "pointer" }}>✕</button>
                             </div>
                             <input placeholder="Ime leka" onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
                             <input placeholder="Doza" onChange={e => setForm({...form, dose: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
