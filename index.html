@@ -2,14 +2,14 @@
 <html lang="sr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DoseTrack</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body style="background-color: #0f0c1a; color: white; margin: 0; font-family: sans-serif;">
+<body style="background-color: #0f0c1a; color: white; margin: 0; font-family: sans-serif; min-height: 100vh;">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -35,36 +35,36 @@
             };
 
             return (
-                <div style={{ width: "100%", padding: "15px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                        <h1 style={{ fontSize: "24px", fontWeight: "bold" }}>DoseTrack</h1>
-                        <button onClick={() => setShowForm(true)} style={{ background: "#a78bfa", padding: "8px 16px", borderRadius: "12px", border: "none", cursor: "pointer", fontWeight: "bold" }}>+ Dodaj</button>
+                <div style={{ width: "100%", padding: "20px", boxSizing: "border-box" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" }}>
+                        <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0 }}>DoseTrack</h1>
+                        <button onClick={() => setShowForm(true)} style={{ background: "#a78bfa", padding: "10px 20px", borderRadius: "12px", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px" }}>+ Dodaj</button>
                     </div>
 
                     {meds.map(med => (
-                        <div key={med.id} onClick={() => toggleTaken(med.id)} style={{ background: "#19142e", padding: "15px", marginBottom: "15px", borderRadius: "16px", border: med.stock <= 5 ? "2px solid #ff6b6b" : "none" }}>
+                        <div key={med.id} onClick={() => toggleTaken(med.id)} style={{ background: "#19142e", padding: "20px", marginBottom: "15px", borderRadius: "16px", border: med.stock <= 5 ? "2px solid #ff6b6b" : "none" }}>
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ fontWeight: "bold", fontSize: "18px" }}>{med.name}</span>
+                                <span style={{ fontWeight: "bold", fontSize: "20px" }}>{med.name}</span>
                                 <span style={{ color: med.stock <= 5 ? "#ff6b6b" : "#7c6a9e", fontWeight: "bold" }}>{med.stock} preostalo</span>
                             </div>
-                            <div style={{ color: "#7c6a9e", marginBottom: "10px" }}>{med.dose}</div>
-                            <div style={{ background: "#2af13d", display: "inline-block", padding: "4px 12px", borderRadius: "8px", fontWeight: "bold", color: "black" }}>
+                            <div style={{ color: "#7c6a9e", marginBottom: "12px", fontSize: "16px" }}>{med.dose}</div>
+                            <div style={{ background: "#2af13d", display: "inline-block", padding: "6px 15px", borderRadius: "10px", fontWeight: "bold", color: "black" }}>
                                 {med.time} {med.taken ? "✅" : "⭕"}
                             </div>
                         </div>
                     ))}
 
                     {showForm && (
-                        <div style={{ position: "fixed", top: "10%", left: "5%", width: "90%", background: "#1a1330", padding: "20px", borderRadius: "20px", border: "2px solid #a78bfa" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                                <h2 style={{ margin: 0 }}>Novi lek</h2>
-                                <button onClick={() => setShowForm(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: "24px", cursor: "pointer" }}>✕</button>
+                        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#0f0c1a", padding: "20px", boxSizing: "border-box", zIndex: 1000 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                                <h2 style={{ margin: 0, fontSize: "24px" }}>Novi lek</h2>
+                                <button onClick={() => setShowForm(false)} style={{ background: "transparent", border: "none", color: "white", fontSize: "30px", cursor: "pointer" }}>✕</button>
                             </div>
-                            <input placeholder="Ime leka" onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
-                            <input placeholder="Doza" onChange={e => setForm({...form, dose: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
-                            <input type="number" placeholder="Zaliha" onChange={e => setForm({...form, stock: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
-                            <input type="time" onChange={e => setForm({...form, time: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: "#12101e", borderRadius: "8px", color: "white" }} />
-                            <button onClick={addMed} style={{ width: "100%", padding: "12px", background: "#a78bfa", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold" }}>Sačuvaj</button>
+                            <input placeholder="Ime leka" onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
+                            <input placeholder="Doza" onChange={e => setForm({...form, dose: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
+                            <input type="number" placeholder="Zaliha" onChange={e => setForm({...form, stock: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "15px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
+                            <input type="time" onChange={e => setForm({...form, time: e.target.value})} style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#19142e", borderRadius: "10px", color: "white", fontSize: "16px" }} />
+                            <button onClick={addMed} style={{ width: "100%", padding: "15px", background: "#a78bfa", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "18px" }}>Sačuvaj</button>
                         </div>
                     )}
                 </div>
