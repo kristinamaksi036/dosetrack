@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <title>DoseTrack</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="background-color: #0f0c1a; color: white; margin: 0; font-family: sans-serif;">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+          const [meds, setMeds] = useState([
+            { id: 1, name: "Lisinopril", dose: "10mg", stock: 30, time: "08:00", taken: false },
+            { id: 2, name: "Metformin", dose: "500mg", stock: 12, time: "08:00", taken: false },
+            { id: 3, name: "Prilinda", dose: "0.25", stock: 4, time: "10:00", taken: false }
+          ]);
+          const [showForm, setShowForm] = useState(false);
+          const [form, setForm] = useState({ name: "", dose: "", stock: 30, time: "08:00" });
+
+          const toggleTaken = (id) => {
+            setMeds(meds.map(m => {
+              if (m.id === id) {
+                const newTaken = !m.taken;
+                const newStock = newTaken ? m.stock - 1 : m.stock + 1;
+                return { ...m, taken: newTaken, stock: Math.max(0, newStock) };
+              }
+              return m;
+            }));
+          };
+
+          const addMed = () => {
+            if(!form.name) return;
+            setMeds([...meds, { id: Date.now(), ...form, stock: parseInt(form.stock), taken: false }]);
+            setShowForm(false);
+            setForm({ name: "", dose: "", stock: 30, time: "08:00" });
+          };
+
+          return (
+            <div style={{ maxWidth: "420px", margin: "0 auto", padding: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>DoseTrack</h1>
+                <button onClick={() => setShowForm(true)} style={{ background: "#a78bfa", padding: "8px 16px", borderRadius: "12px", border: "none", cursor: "pointer", fontWeight: "bold" }}>+ Dodaj</button>
+              </div>
+
+              {meds.map(med => (
+                <div key={med.id} onClick={() => toggleTaken(med.id)} style={{ background: "#19142e", padding: "18px", marginBottom: "15px", borderRadius: "16px", border: med.stock <= 5 ? "2px solid #ff6b6b" : "1px solid #2a1f3d", cursor: "pointer", transition: "0.3s" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontWeight: "bold", fontSize: "18px" }}>{med.name}</span>
+                    <span style={{ color: med.stock <= 5 ? "#ff6b6b" : "#7c6a9e", fontWeight: "bold" }}>{med.stock} preostalo</span>
+                  </div>
+                  <div style={{ color: "#7c6a9e", marginBottom: "10px" }}>{med.dose}</div>
+                  <div style={{ background: "#2a1f3d", display: "inline-block", padding: "4px 12px", borderRadius: "8px", fontWeight: "bold" }}>
+                    {med.time} {med.taken ? "✅" : "⭕"}
+                  </div>
+                </div>
+              ))}
+
+              {showForm && (
+                <div style={{ position: "fixed", top: "15%", left: "5%", width: "90%", background: "#1a1330", padding: "25px", borderRadius: "20px", border: "2px solid #a78bfa" }}>
+                  <h2 style={{ marginBottom: "15px" }}>Novi lek</h2>
+                  <input placeholder="Ime leka" onChange={e => setForm({...form, name: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
+                  <input placeholder="Doza" onChange={e => setForm({...form, dose: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
+                  <input type="number" placeholder="Koliko ima u kutiji?" onChange={e => setForm({...form, stock: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "10px", background: "#12101e", borderRadius: "8px", color: "white" }} />
+                  <input type="time" onChange={e => setForm({...form, time: e.target.value})} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: "#12101e", borderRadius: "8px", color: "white" }} />
+                  <button onClick={addMed} style={{ width: "100%", padding: "12px", background: "#a78bfa", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold" }}>Sačuvaj</button>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
