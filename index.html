@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DoseTrack</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0c1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DoseTrack">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; transition: background .3s, color .3s; }
+    body.dark  { background: #0f0c1a; color: #f0eaf8; }
+    body.light { background: #f4f1fa; color: #1a1330; }
+
+    /* THEME VARS */
+    body.dark  { --bg:#0f0c1a; --bg2:#19142e; --bg3:#1a1330; --bg4:#12101e; --border:#2a1f3d; --border2:#3a2f5a; --txt:#f0eaf8; --txt2:#7c6a9e; --txt3:#9a8abf; --accent:#a78bfa; --accentDark:#7c3aed; --danger:#ff6b6b; --dangerBg:#3a1212; --dangerBorder:#ff6b6b44; --green:#4ade80; --greenBg:#141f14; --greenBorder:#2a422a; --inputBg:#12101e; --card:#19142e; --tabBg:#1a1330; --pill:#1e1a2e; }
+    body.light { --bg:#f4f1fa; --bg2:#ffffff; --bg3:#eee8fa; --bg4:#f9f7ff; --border:#ddd5f5; --border2:#c4b5e8; --txt:#1a1330; --txt2:#7c6a9e; --txt3:#9a8abf; --accent:#7c3aed; --accentDark:#5b21b6; --danger:#e05555; --dangerBg:#ffeaea; --dangerBorder:#ffaaaa; --green:#16a34a; --greenBg:#f0fdf4; --greenBorder:#86efac; --inputBg:#ffffff; --card:#ffffff; --tabBg:#eee8fa; --pill:#f3f0ff; }
+
+    input, button { font-family: inherit; }
+    input[type=number]::-webkit-inner-spin-button { opacity: 0.3; }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    @keyframes slideUp    { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    @keyframes fadeIn     { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulseBorder{ 0%,100%{ box-shadow:0 0 0 0 #ff6b6b15; } 50%{ box-shadow:0 0 16px 3px #ff6b6b30; } }
+    @keyframes toastIn    { from { opacity:0; transform:translate(-50%,10px); } to { opacity:1; transform:translate(-50%,0); } }
+    @keyframes toastOut   { from { opacity:1; } to { opacity:0; transform:translate(-50%,-6px); } }
+    @keyframes scaleIn    { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:scale(1); } }
+    .card        { animation: fadeIn 0.3s ease both; }
+    .drawer      { animation: slideUp 0.32s cubic-bezier(.22,.68,0,1.2) both; }
+    .confirm-box { animation: scaleIn 0.2s ease both; }
+    .toast-in    { animation: toastIn  0.25s ease both; }
+    .toast-out   { animation: toastOut 0.25s ease both; }
+
+    .tab-btn   { flex:1; padding:8px 0; border-radius:9px; border:none; font-size:12px; font-weight:600; transition:all .2s; cursor:pointer; background:transparent; color:var(--txt2); }
+    .tab-btn.active { background:var(--accent); color:#fff; }
+    body.light .tab-btn.active { color:#fff; }
+
+    .med-card  { border-radius:16px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all .2s; border:1.5px solid transparent; background:var(--card); }
+    .med-card:active { transform:scale(.98); }
+    .check-box { width:26px; height:26px; border-radius:8px; border:2px solid var(--border2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; }
+    .form-input{ display:block; width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--inputBg); color:var(--txt); font-size:15px; transition:border-color .2s; }
+    .form-input:focus { border-color:var(--accent); outline:none; }
+    .form-input::placeholder { color:var(--border2); }
+    .form-label{ font-size:11px; color:var(--txt2); font-weight:600; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px; }
+    .day-btn   { flex:1; padding:8px 0; border-radius:8px; border:none; font-size:12px; font-weight:700; transition:all .15s; cursor:pointer; }
+    .save-btn  { width:100%; padding:14px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--accent),var(--accentDark)); color:#fff; font-size:15px; font-weight:700; transition:opacity .15s; cursor:pointer; }
+    .save-btn:active { opacity:.85; }
+    .fab       { position:fixed; bottom:28px; right:max(24px,calc(50% - 186px)); width:54px; height:54px; border-radius:16px; border:none; background:linear-gradient(135deg,var(--accent),var(--accentDark)); color:#fff; font-size:26px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px #a78bfa44; z-index:40; transition:transform .15s; cursor:pointer; }
+    .fab:active { transform:scale(.93); }
+    .overlay   { position:fixed; inset:0; background:#0a0716cc; backdrop-filter:blur(6px); z-index:50; display:flex; align-items:flex-end; }
+    .overlay-panel { width:100%; max-width:440px; margin:0 auto; background:var(--bg3); border-radius:22px 22px 0 0; padding:24px 24px 44px; border:1.5px solid var(--border); border-bottom:none; max-height:92vh; overflow-y:auto; }
+    .close-btn { background:none; border:none; color:var(--txt2); font-size:22px; line-height:1; padding:4px; border-radius:6px; transition:color .15s; cursor:pointer; }
+    .close-btn:hover { color:var(--txt); }
+    .lang-btn  { background:var(--bg3); border:1.5px solid var(--border); color:var(--accent); font-size:12px; font-weight:700; padding:5px 11px; border-radius:8px; letter-spacing:.05em; transition:all .15s; cursor:pointer; }
+    .del-btn   { background:var(--dangerBg); border:1px solid var(--dangerBorder); border-radius:8px; color:var(--danger); width:30px; height:30px; font-size:15px; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; cursor:pointer; }
+    .edit-btn  { background:var(--pill); border:1px solid var(--border); border-radius:8px; color:var(--txt2); width:30px; height:30px; font-size:15px; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; cursor:pointer; }
+    .confirm-overlay { position:fixed; inset:0; background:#0a0716dd; backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .confirm-panel   { background:var(--bg3); border:1.5px solid var(--dangerBorder); border-radius:20px; padding:28px 24px; max-width:320px; width:100%; text-align:center; }
+    .profile-chip { display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:var(--bg3); font-size:12px; font-weight:600; color:var(--txt2); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .profile-chip.active { border-color:var(--accent); color:var(--accent); background:var(--pill); }
+    .theme-btn { background:var(--bg3); border:1.5px solid var(--border); color:var(--txt2); font-size:16px; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; }
+    .notif-btn { background:var(--bg3); border:1.5px solid var(--border); color:var(--txt2); font-size:13px; font-weight:600; padding:5px 11px; border-radius:8px; cursor:pointer; transition:all .15s; }
+    .streak-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; background:linear-gradient(135deg,#f59e0b22,#f59e0b11); color:#f59e0b; border:1px solid #f59e0b44; }
+  </style>
+</head>
+<body class="dark">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ─── TRANSLATIONS ─── */
+const T = {
+  en: {
+    today:"Today", allMeds:"All Meds", history:"History", profiles:"Profiles",
+    addMed:"Add Medication", editMed:"Edit Medication",
+    noToday:"No doses scheduled today", noMeds:"No medications added yet",
+    lowStock:"LOW STOCK WARNING", pillsLeft:"pills left",
+    soon:"⚡ Soon", missed:"⏰ Missed",
+    icon:"Icon", medName:"Medication Name", dosage:"Dosage",
+    time:"Time", stockPills:"Stock (pills)", scheduleDays:"Schedule Days",
+    notes:"Notes (optional)", save:"Save Medication", cancel:"Cancel",
+    stockLabel:"Stock", left:"left",
+    deleteConfirmTitle:"Remove Medication",
+    deleteConfirmMsg: n => `Remove "${n}" from your list? This cannot be undone.`,
+    deleteConfirmYes:"Yes, Remove", deleteConfirmNo:"Keep It",
+    toastAdded:"💊 Medication added!", toastUpdated:"✏️ Medication updated!", toastRemoved:"🗑 Removed",
+    toastTaken: n => `✓ ${n} taken!`, toastUntaken: n => `↩ ${n} unmarked`,
+    dayNames:["Su","Mo","Tu","We","Th","Fr","Sa"],
+    daysFull:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    months:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    streak:"day streak", streakNone:"Start your streak today!",
+    historyEmpty:"No history yet", takenAt:"Taken at",
+    addProfile:"Add Profile", profileName:"Profile Name", profileIcon:"Profile Icon",
+    enableNotif:"Enable Notifications", notifEnabled:"Notifications ON ✓", notifDenied:"Notifications blocked",
+    exportPDF:"Export PDF",
+    notifPrompt:"Allow notifications to get reminders when it's time to take your medication.",
+  },
+  sr: {
+    today:"Danas", allMeds:"Svi Lekovi", history:"Istorija", profiles:"Profili",
+    addMed:"Dodaj Lek", editMed:"Izmeni Lek",
+    noToday:"Nema doza zakazanih za danas", noMeds:"Još uvek nema dodatih lekova",
+    lowStock:"UPOZORENJE — MALA ZALIHA", pillsLeft:"tableta ostalo",
+    soon:"⚡ Uskoro", missed:"⏰ Propušteno",
+    icon:"Ikona", medName:"Naziv leka", dosage:"Doza",
+    time:"Vreme", stockPills:"Zaliha (tablete)", scheduleDays:"Dani uzimanja",
+    notes:"Napomena (opciono)", save:"Sačuvaj Lek", cancel:"Otkaži",
+    stockLabel:"Zaliha", left:"ostalo",
+    deleteConfirmTitle:"Ukloni Lek",
+    deleteConfirmMsg: n => `Ukloniti "${n}" sa liste? Ovo se ne može poništiti.`,
+    deleteConfirmYes:"Da, ukloni", deleteConfirmNo:"Zadrži",
+    toastAdded:"💊 Lek dodat!", toastUpdated:"✏️ Lek izmenjen!", toastRemoved:"🗑 Uklonjeno",
+    toastTaken: n => `✓ ${n} uzeto!`, toastUntaken: n => `↩ ${n} odznačeno`,
+    dayNames:["Ne","Po","Ut","Sr","Če","Pe","Su"],
+    daysFull:["Nedelja","Ponedeljak","Utorak","Sreda","Četvrtak","Petak","Subota"],
+    months:["Jan","Feb","Mar","Apr","Maj","Jun","Jul","Avg","Sep","Okt","Nov","Dec"],
+    streak:"dana zaredom", streakNone:"Počni danas!",
+    historyEmpty:"Nema istorije", takenAt:"Uzeto u",
+    addProfile:"Dodaj Profil", profileName:"Ime profila", profileIcon:"Ikona profila",
+    enableNotif:"Uključi Obaveštenja", notifEnabled:"Obaveštenja uključena ✓", notifDenied:"Obaveštenja blokirana",
+    exportPDF:"Izvezi PDF",
+    notifPrompt:"Dozvoli obaveštenja da dobijaš podsetnike kada je vreme za lek.",
+  }
+};
+
+const ICONS = ["💊","💉","🌿","🧪","🫀","🧬","⚡","🌟"];
+const PROFILE_ICONS = ["👤","👩","👨","👵","👴","🧒","👶","🐾"];
+const COLORS = ["#4FC3F7","#a78bfa","#f472b6","#4ade80","#fb923c","#facc15","#34d399","#f87171"];
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function fmtTime(t) {
+  const [h,m] = t.split(":").map(Number);
+  return `${h%12||12}:${String(m).padStart(2,"0")} ${h<12?"AM":"PM"}`;
+}
+
+/* ─── STORAGE ─── */
+function load(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; } }
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function loadAll() {
+  return {
+    meds:     load("dt_meds_v3", []),
+    lang:     load("dt_lang", "sr"),
+    theme:    load("dt_theme", "dark"),
+    profiles: load("dt_profiles", [{id:"default", name:"Ja", icon:"👤"}]),
+    activeProfile: load("dt_activeProfile", "default"),
+    history:  load("dt_history", {}),
+  };
+}
+
+/* ─── STREAK ─── */
+function calcStreak(history, medId) {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const key = d.toISOString().slice(0,10);
+    const dayHistory = history[key] || {};
+    const tookAny = Object.keys(dayHistory).some(k => k.startsWith(medId+"-") && dayHistory[k]);
+    if (!tookAny) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+/* ─── NOTIFICATIONS ─── */
+async function requestNotifPermission() {
+  if (!("Notification" in window)) return "unsupported";
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") return "denied";
+  const result = await Notification.requestPermission();
+  return result;
+}
+
+function scheduleNotifications(meds, t, profileName) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  // Clear existing timers stored on window
+  if (window._notifTimers) window._notifTimers.forEach(clearTimeout);
+  window._notifTimers = [];
+
+  const now = new Date();
+  const todayDay = now.getDay();
+
+  meds.forEach(med => {
+    if (!med.days.includes(todayDay)) return;
+    med.times.forEach(time => {
+      const [h, m] = time.split(":").map(Number);
+      const target = new Date();
+      target.setHours(h, m, 0, 0);
+      const diff = target - now;
+      if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+        const timer = setTimeout(() => {
+          const who = profileName && profileName !== "Ja" && profileName !== "Me" ? ` (${profileName})` : "";
+          new Notification(`💊 DoseTrack${who}`, {
+            body: `Time to take ${med.name}${med.dose ? " — " + med.dose : ""}`,
+            icon: "/icon-192.png",
+            badge: "/icon-192.png",
+            tag: `dose-${med.id}-${time}`,
+            renotify: true,
+          });
+        }, diff);
+        window._notifTimers.push(timer);
+      }
+    });
+  });
+}
+
+/* ─── RING ─── */
+function Ring({ done, total }) {
+  const r=36, c=2*Math.PI*r, pct=total?done/total:0;
+  return (
+    <div style={{position:"relative",width:84,height:84,flexShrink:0}}>
+      <svg width="84" height="84" style={{transform:"rotate(-90deg)"}}>
+        <circle cx="42" cy="42" r={r} fill="none" stroke="var(--border)" strokeWidth="7"/>
+        <circle cx="42" cy="42" r={r} fill="none" stroke={pct===1?"var(--green)":"var(--accent)"} strokeWidth="7"
+          strokeDasharray={c} strokeDashoffset={c*(1-pct)} strokeLinecap="round"
+          style={{transition:"stroke-dashoffset .6s ease, stroke .4s"}}/>
+      </svg>
+      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",lineHeight:1}}>
+        <div style={{fontSize:17,fontWeight:700,color:pct===1?"var(--green)":"var(--txt)"}}>{done}/{total}</div>
+        <div style={{fontSize:10,color:"var(--txt2)",marginTop:2}}>today</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── TOAST ─── */
+function Toast({ msg, leaving }) {
+  return (
+    <div className={leaving?"toast-out":"toast-in"} style={{
+      position:"fixed",bottom:96,left:"50%",transform:"translateX(-50%)",zIndex:200,
+      background:"var(--bg3)",color:"var(--txt)",padding:"10px 20px",borderRadius:12,
+      fontSize:13,fontWeight:600,border:"1px solid var(--border2)",
+      boxShadow:"0 8px 24px #0009",whiteSpace:"nowrap",pointerEvents:"none"
+    }}>{msg}</div>
+  );
+}
+
+/* ─── CONFIRM DIALOG ─── */
+function ConfirmDialog({ name, t, onConfirm, onCancel }) {
+  return (
+    <div className="confirm-overlay" onClick={onCancel}>
+      <div className="confirm-panel confirm-box" onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:32,marginBottom:12}}>🗑️</div>
+        <div style={{fontWeight:700,fontSize:17,marginBottom:10,color:"var(--txt)"}}>{t.deleteConfirmTitle}</div>
+        <div style={{fontSize:14,color:"var(--txt3)",marginBottom:24,lineHeight:1.5}}>{t.deleteConfirmMsg(name)}</div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onCancel} style={{flex:1,padding:"12px",borderRadius:12,border:"1.5px solid var(--border)",background:"transparent",color:"var(--txt3)",fontSize:14,fontWeight:600,cursor:"pointer"}}>{t.deleteConfirmNo}</button>
+          <button onClick={onConfirm} style={{flex:1,padding:"12px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#e05555,#b91c1c)",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t.deleteConfirmYes}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── MED FORM ─── */
+function MedForm({ t, initial, onSave, onClose }) {
+  const [form, setForm] = useState(initial || {
+    name:"", dose:"", stock:"", time:"08:00",
+    days:[0,1,2,3,4,5,6], color:"#4FC3F7", icon:"💊", notes:""
+  });
+  function toggleDay(i) { setForm(f => ({...f, days: f.days.includes(i)?f.days.filter(d=>d!==i):[...f.days,i]})); }
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="overlay-panel drawer" onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+          <span style={{fontWeight:700,fontSize:18,color:"var(--txt)"}}>{initial?.id ? t.editMed : t.addMed}</span>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+        {/* Icon */}
+        <div style={{marginBottom:14}}>
+          <label className="form-label">{t.icon}</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {ICONS.map(ic=>(
+              <button key={ic} onClick={()=>setForm(f=>({...f,icon:ic}))} style={{width:38,height:38,borderRadius:9,border:`2px solid ${form.icon===ic?"var(--accent)":"var(--border)"}`,background:form.icon===ic?"var(--pill)":"var(--inputBg)",fontSize:18,transition:"all .15s",cursor:"pointer"}}>{ic}</button>
+            ))}
+          </div>
+        </div>
+        {/* Color */}
+        <div style={{marginBottom:14}}>
+          <label className="form-label">Color</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {COLORS.map(c=>(
+              <button key={c} onClick={()=>setForm(f=>({...f,color:c}))} style={{width:28,height:28,borderRadius:50,border:`3px solid ${form.color===c?"var(--txt)":"transparent"}`,background:c,cursor:"pointer"}}/>
+            ))}
+          </div>
+        </div>
+        {/* Name */}
+        <div style={{marginBottom:14}}>
+          <label className="form-label">{t.medName}</label>
+          <input className="form-input" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Aspirin"/>
+        </div>
+        {/* Dosage */}
+        <div style={{marginBottom:14}}>
+          <label className="form-label">{t.dosage}</label>
+          <input className="form-input" value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} placeholder="e.g. 100mg"/>
+        </div>
+        {/* Time + Stock */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          <div>
+            <label className="form-label">{t.time}</label>
+            <input type="time" className="form-input" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))}/>
+          </div>
+          <div>
+            <label className="form-label">{t.stockPills}</label>
+            <input type="number" className="form-input" min="0" value={form.stock} onChange={e=>setForm(f=>({...f,stock:e.target.value}))} placeholder="e.g. 30"/>
+          </div>
+        </div>
+        {/* Notes */}
+        <div style={{marginBottom:14}}>
+          <label className="form-label">{t.notes}</label>
+          <input className="form-input" value={form.notes||""} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="e.g. Take with food"/>
+        </div>
+        {/* Days */}
+        <div style={{marginBottom:22}}>
+          <label className="form-label">{t.scheduleDays}</label>
+          <div style={{display:"flex",gap:6}}>
+            {t.dayNames.map((d,i)=>(
+              <button key={i} className="day-btn" onClick={()=>toggleDay(i)} style={{background:form.days.includes(i)?"var(--accent)":"var(--border)",color:form.days.includes(i)?"#fff":"var(--txt2)"}}>{d}</button>
+            ))}
+          </div>
+        </div>
+        <button className="save-btn" onClick={()=>{if(form.name.trim())onSave(form);}}>{t.save}</button>
+        <button onClick={onClose} style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,border:"1.5px solid var(--border)",background:"transparent",color:"var(--txt2)",fontSize:14,fontWeight:600,cursor:"pointer"}}>{t.cancel}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── HISTORY VIEW ─── */
+function HistoryView({ meds, history, t }) {
+  const entries = [];
+  Object.entries(history).forEach(([date, doses]) => {
+    Object.entries(doses).forEach(([key, taken]) => {
+      if (!taken) return;
+      const [medId, time] = key.split(/-(?=\d{2}:\d{2})/);
+      const med = meds.find(m => String(m.id) === medId);
+      if (med) entries.push({ date, med, time });
+    });
+  });
+  entries.sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+
+  if (entries.length === 0) return (
+    <div style={{textAlign:"center",color:"var(--txt2)",marginTop:60}}>
+      <div style={{fontSize:40,marginBottom:12}}>📋</div>
+      <div style={{fontSize:14}}>{t.historyEmpty}</div>
+    </div>
+  );
+
+  let lastDate = null;
+  return (
+    <div>
+      {entries.map((e,i) => {
+        const d = new Date(e.date+"T12:00:00");
+        const dateLabel = `${d.getDate()} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
+        const showDate = e.date !== lastDate;
+        lastDate = e.date;
+        return (
+          <div key={i}>
+            {showDate && <div style={{fontSize:11,fontWeight:700,color:"var(--txt2)",letterSpacing:".1em",textTransform:"uppercase",margin:"14px 0 6px"}}>{dateLabel}</div>}
+            <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:12,background:"var(--card)",border:"1.5px solid var(--border)",marginBottom:6}}>
+              <span style={{fontSize:20}}>{e.med.icon||"💊"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:14,color:"var(--txt)"}}>{e.med.name}</div>
+                {e.med.dose && <div style={{fontSize:12,color:"var(--txt2)"}}>{e.med.dose}</div>}
+              </div>
+              <div style={{fontSize:12,color:"var(--green)",fontWeight:600}}>✓ {fmtTime(e.time)}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── PROFILES VIEW ─── */
+function ProfilesView({ profiles, activeProfile, onSwitch, onAdd, onDelete, t }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newIcon, setNewIcon] = useState("👤");
+  return (
+    <div>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+        {profiles.map(p=>(
+          <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:14,background:"var(--card)",border:`1.5px solid ${p.id===activeProfile?"var(--accent)":"var(--border)"}`,cursor:"pointer"}} onClick={()=>onSwitch(p.id)}>
+            <span style={{fontSize:24}}>{p.icon}</span>
+            <span style={{flex:1,fontWeight:600,fontSize:15,color:"var(--txt)"}}>{p.name}</span>
+            {p.id===activeProfile && <span style={{fontSize:11,color:"var(--accent)",fontWeight:700}}>ACTIVE</span>}
+            {p.id!=="default" && <button className="del-btn" onClick={e=>{e.stopPropagation();onDelete(p.id);}}>🗑</button>}
+          </div>
+        ))}
+      </div>
+      {!showAdd
+        ? <button onClick={()=>setShowAdd(true)} style={{width:"100%",padding:"12px",borderRadius:14,border:"1.5px dashed var(--border2)",background:"transparent",color:"var(--txt2)",fontSize:14,fontWeight:600,cursor:"pointer"}}>+ {t.addProfile}</button>
+        : <div style={{padding:"16px",borderRadius:14,background:"var(--card)",border:"1.5px solid var(--border)"}}>
+            <div style={{marginBottom:10}}>
+              <label className="form-label">{t.profileIcon}</label>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {PROFILE_ICONS.map(ic=>(
+                  <button key={ic} onClick={()=>setNewIcon(ic)} style={{width:36,height:36,borderRadius:9,border:`2px solid ${newIcon===ic?"var(--accent)":"var(--border)"}`,background:newIcon===ic?"var(--pill)":"var(--inputBg)",fontSize:18,cursor:"pointer"}}>{ic}</button>
+                ))}
+              </div>
+            </div>
+            <input className="form-input" style={{marginBottom:10}} value={newName} onChange={e=>setNewName(e.target.value)} placeholder={t.profileName}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowAdd(false)} style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid var(--border)",background:"transparent",color:"var(--txt2)",fontWeight:600,cursor:"pointer"}}>{t.cancel}</button>
+              <button onClick={()=>{if(newName.trim()){onAdd({id:Date.now().toString(),name:newName.trim(),icon:newIcon});setNewName("");setShowAdd(false);}}} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:"var(--accent)",color:"#fff",fontWeight:700,cursor:"pointer"}}>{t.save}</button>
+            </div>
+          </div>
+      }
+    </div>
+  );
+}
+
+/* ─── MAIN APP ─── */
+function App() {
+  const init = loadAll();
+  const [lang, setLang]               = useState(init.lang);
+  const [theme, setTheme]             = useState(init.theme);
+  const [meds, setMeds]               = useState(init.meds);
+  const [profiles, setProfiles]       = useState(init.profiles);
+  const [activeProfile, setActiveProfile] = useState(init.activeProfile);
+  const [history, setHistory]         = useState(init.history);
+  const [view, setView]               = useState("today");
+  const [showForm, setShowForm]       = useState(false);
+  const [editMed, setEditMed]         = useState(null);
+  const [now, setNow]                 = useState(new Date());
+  const [toast, setToast]             = useState(null);
+  const [toastLeave, setToastLeave]   = useState(false);
+  const [confirmId, setConfirmId]     = useState(null);
+  const [notifStatus, setNotifStatus] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
+  const toastTimer = useRef(null);
+
+  const t = T[lang];
+
+  // Theme
+  useEffect(() => {
+    document.body.className = theme;
+    save("dt_theme", theme);
+  }, [theme]);
+
+  // Persist
+  useEffect(() => { save("dt_meds_v3", meds); }, [meds]);
+  useEffect(() => { save("dt_lang", lang); }, [lang]);
+  useEffect(() => { save("dt_profiles", profiles); }, [profiles]);
+  useEffect(() => { save("dt_activeProfile", activeProfile); }, [activeProfile]);
+  useEffect(() => { save("dt_history", history); }, [history]);
+
+  // Clock tick
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(tick);
+  }, []);
+
+  // Schedule notifications whenever meds change
+  useEffect(() => {
+    const ap = profiles.find(p=>p.id===activeProfile);
+    scheduleNotifications(profileMeds, t, ap?.name);
+  }, [meds, activeProfile, lang]);
+
+  const today = now.getDay();
+  const tKey  = todayKey();
+
+  const profileMeds = meds.filter(m => (m.profileId || "default") === activeProfile);
+
+  const doses = profileMeds
+    .filter(m => m.days.includes(today))
+    .flatMap(m => m.times.map(time => ({ med:m, time, id:`${m.id}-${time}` })))
+    .sort((a,b) => a.time.localeCompare(b.time));
+
+  const doneCount = doses.filter(d => {
+    const k = `${tKey}-${d.time}`;
+    return d.med.taken?.[k] || history[tKey]?.[`${d.med.id}-${d.time}`];
+  }).length;
+
+  const lowStock = profileMeds.filter(m => typeof m.stock==="number" && m.stock<=5);
+
+  function fire(msg) {
+    clearTimeout(toastTimer.current);
+    setToastLeave(false);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => {
+      setToastLeave(true);
+      setTimeout(() => setToast(null), 260);
+    }, 2200);
+  }
+
+  function toggleTaken(medId, time) {
+    const k = `${tKey}-${time}`;
+    const histKey = `${medId}-${time}`;
+    setMeds(prev => prev.map(m => {
+      if (m.id !== medId) return m;
+      const wasTaken = !!m.taken?.[k];
+      const taken = { ...m.taken, [k]: !wasTaken };
+      const stock = typeof m.stock==="number" ? Math.max(0, m.stock+(wasTaken?1:-1)) : m.stock;
+      fire(wasTaken ? t.toastUntaken(m.name) : t.toastTaken(m.name));
+      // Update history
+      setHistory(prev => ({
+        ...prev,
+        [tKey]: { ...(prev[tKey]||{}), [histKey]: !wasTaken }
+      }));
+      return { ...m, taken, stock };
+    }));
+  }
+
+  function saveMed(form) {
+    if (editMed) {
+      setMeds(prev => prev.map(m => m.id===editMed.id ? {
+        ...m, name:form.name.trim(), dose:form.dose.trim(), notes:form.notes||"",
+        stock:form.stock!==""?Math.max(0,parseInt(form.stock)||0):null,
+        times:[form.time], days:[...form.days].sort(), color:form.color, icon:form.icon
+      } : m));
+      fire(t.toastUpdated);
+      setEditMed(null);
+    } else {
+      setMeds(prev => [...prev, {
+        id:Date.now(), profileId:activeProfile,
+        name:form.name.trim(), dose:form.dose.trim(), notes:form.notes||"",
+        stock:form.stock!==""?Math.max(0,parseInt(form.stock)||0):null,
+        times:[form.time], days:[...form.days].sort(), color:form.color, icon:form.icon, taken:{}
+      }]);
+      fire(t.toastAdded);
+    }
+    setShowForm(false);
+  }
+
+  async function handleNotif() {
+    const result = await requestNotifPermission();
+    setNotifStatus(result);
+    if (result === "granted") {
+      const ap = profiles.find(p=>p.id===activeProfile);
+      scheduleNotifications(profileMeds, t, ap?.name);
+      fire("🔔 " + t.notifEnabled);
+    }
+  }
+
+  const confirmMed = meds.find(m => m.id === confirmId);
+  const activeProfileObj = profiles.find(p=>p.id===activeProfile);
+
+  const tabs = [
+    ["today", t.today],
+    ["all", t.allMeds],
+    ["history", t.history],
+    ["profiles", t.profiles],
+  ];
+
+  return (
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",maxWidth:440,margin:"0 auto",position:"relative"}}>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,
+        background:"radial-gradient(ellipse 80% 50% at 50% -10%,#2d1b6920,transparent 70%)"}}/>
+
+      {/* HEADER */}
+      <header style={{position:"relative",zIndex:1,padding:"20px 24px 0"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={{fontSize:11,color:"var(--accent)",fontWeight:600,letterSpacing:".12em",textTransform:"uppercase",marginBottom:4}}>
+              {t.daysFull[today]}, {now.toLocaleDateString(lang==="sr"?"sr-RS":"en-US",{month:"short",day:"numeric"})}
+            </div>
+            <h1 style={{fontSize:26,fontWeight:700,margin:0,letterSpacing:"-0.5px",color:"var(--txt)"}}>
+              Dose<span style={{color:"var(--accent)"}}>Track</span>
+              {activeProfileObj && activeProfileObj.id!=="default" &&
+                <span style={{fontSize:14,color:"var(--txt2)",fontWeight:400,marginLeft:8}}>{activeProfileObj.icon} {activeProfileObj.name}</span>
+              }
+            </h1>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {/* Theme toggle */}
+              <button className="theme-btn" onClick={()=>setTheme(t=>t==="dark"?"light":"dark")}>
+                {theme==="dark"?"☀️":"🌙"}
+              </button>
+              {/* Lang toggle */}
+              <button className="lang-btn" onClick={()=>setLang(l=>l==="sr"?"en":"sr")}>
+                {lang==="sr"?"🇷🇸 SR":"🇬🇧 EN"}
+              </button>
+            </div>
+            <Ring done={doneCount} total={doses.length}/>
+          </div>
+        </div>
+
+        {/* Notification button */}
+        {notifStatus !== "granted" && notifStatus !== "unsupported" && (
+          <button className="notif-btn" onClick={handleNotif} style={{marginTop:10,width:"100%",background:"linear-gradient(135deg,var(--accent),var(--accentDark))",color:"#fff",border:"none"}}>
+            🔔 {notifStatus==="denied" ? t.notifDenied : t.enableNotif}
+          </button>
+        )}
+        {notifStatus === "granted" && (
+          <div style={{marginTop:8,fontSize:11,color:"var(--green)",fontWeight:600,textAlign:"center"}}>🔔 {t.notifEnabled}</div>
+        )}
+
+        {/* Tabs */}
+        <div style={{display:"flex",gap:4,marginTop:14,background:"var(--tabBg)",borderRadius:13,padding:4}}>
+          {tabs.map(([k,lbl])=>(
+            <button key={k} className={`tab-btn${view===k?" active":""}`} onClick={()=>setView(k)}>{lbl}</button>
+          ))}
+        </div>
+      </header>
+
+      {/* LOW STOCK WARNING */}
+      {lowStock.length>0&&(
+        <div style={{position:"relative",zIndex:1,margin:"10px 24px 0",borderRadius:14,
+          background:"linear-gradient(135deg,var(--dangerBg),var(--dangerBg))",border:"1.5px solid var(--dangerBorder)",
+          padding:"10px 14px",animation:"pulseBorder 2s ease-in-out infinite"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:18}}>⚠️</span>
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:"var(--danger)",letterSpacing:".06em"}}>{t.lowStock}</div>
+              <div style={{fontSize:11,color:"var(--danger)",marginTop:1,lineHeight:1.4,opacity:.8}}>
+                {lowStock.map(m=>`${m.name} — ${m.stock} ${t.pillsLeft}`).join(" · ")}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <main style={{flex:1,overflowY:"auto",padding:"12px 24px 96px",position:"relative",zIndex:1}}>
+
+        {/* TODAY */}
+        {view==="today" && (
+          doses.length===0
+            ? <div style={{textAlign:"center",color:"var(--txt2)",marginTop:60}}>
+                <div style={{fontSize:40,marginBottom:12}}>🎉</div>
+                <div style={{fontSize:14}}>{t.noToday}</div>
+              </div>
+            : doses.map(({med,time,id},i) => {
+                const k=`${tKey}-${time}`;
+                const taken = !!(med.taken?.[k] || history[tKey]?.[`${med.id}-${time}`]);
+                const [h]=time.split(":").map(Number);
+                const nowMin=now.getHours()*60+now.getMinutes(), doseMin=h*60+parseInt(time.split(":")[1]);
+                const soon=!taken&&Math.abs(doseMin-nowMin)<=30, missed=!taken&&doseMin<nowMin;
+                const streak = calcStreak(history, String(med.id));
+                return (
+                  <div key={id} className="card" style={{animationDelay:`${i*40}ms`}} onClick={()=>toggleTaken(med.id,time)}>
+                    <div className="med-card" style={{
+                      background:taken?"var(--greenBg)":"var(--card)",
+                      borderColor:taken?"var(--greenBorder)":soon?med.color+"55":"var(--border)",
+                      opacity:taken?.75:1,
+                    }}>
+                      <div style={{width:44,height:44,borderRadius:12,background:`${med.color}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                        {med.icon||"💊"}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
+                          <span style={{fontWeight:700,fontSize:15,color:taken?"var(--green)":"var(--txt)"}}>{med.name}</span>
+                          <span style={{fontSize:11,fontWeight:600,color:soon&&!taken?med.color:missed?"var(--danger)":"var(--txt2)",flexShrink:0}}>
+                            {soon&&!taken?t.soon:missed?t.missed:fmtTime(time)}
+                          </span>
+                        </div>
+                        <div style={{fontSize:12,color:"var(--txt2)",marginTop:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                          <span>{med.dose} · {fmtTime(time)}</span>
+                          {streak>0 && <span className="streak-badge">🔥 {streak} {t.streak}</span>}
+                          {typeof med.stock==="number" && (
+                            <span style={{padding:"1px 7px",borderRadius:20,fontSize:11,fontWeight:700,background:med.stock<=5?"var(--dangerBg)":"var(--pill)",color:med.stock<=5?"var(--danger)":"var(--txt2)",border:`1px solid ${med.stock<=5?"var(--dangerBorder)":"var(--border)"}`}}>
+                              {med.stock<=5?"⚠️ ":""}{med.stock} {t.left}
+                            </span>
+                          )}
+                        </div>
+                        {med.notes && <div style={{fontSize:11,color:"var(--txt2)",marginTop:2,fontStyle:"italic"}}>📝 {med.notes}</div>}
+                      </div>
+                      <div className="check-box" style={{borderColor:taken?"var(--green)":"var(--border2)",background:taken?"var(--green)":"transparent"}}>
+                        {taken&&<span style={{fontSize:13,color:"#fff",lineHeight:1}}>✓</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+        )}
+
+        {/* ALL MEDS */}
+        {view==="all" && (
+          profileMeds.length===0
+            ? <div style={{textAlign:"center",color:"var(--txt2)",marginTop:60}}>
+                <div style={{fontSize:40,marginBottom:12}}>💊</div>
+                <div style={{fontSize:14}}>{t.noMeds}</div>
+              </div>
+            : profileMeds.map((med,i) => (
+                <div key={med.id} className="card" style={{animationDelay:`${i*40}ms`,marginBottom:12,padding:"15px",borderRadius:16,background:"var(--card)",border:"1.5px solid var(--border)",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,bottom:0,width:4,background:`linear-gradient(to bottom,${med.color},${med.color}55)`}}/>
+                  <div style={{paddingLeft:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:22}}>{med.icon||"💊"}</span>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:15,color:"var(--txt)"}}>{med.name}</div>
+                          {med.dose&&<div style={{fontSize:12,color:"var(--txt2)",marginTop:1}}>{med.dose}</div>}
+                          {med.notes&&<div style={{fontSize:11,color:"var(--txt2)",marginTop:1,fontStyle:"italic"}}>📝 {med.notes}</div>}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button className="edit-btn" onClick={e=>{e.stopPropagation();setEditMed({...med,stock:med.stock??""});setShowForm(true);}}>✏️</button>
+                        <button className="del-btn" onClick={e=>{e.stopPropagation();setConfirmId(med.id);}}>🗑</button>
+                      </div>
+                    </div>
+                    <div style={{marginTop:10,display:"flex",gap:5,flexWrap:"wrap"}}>
+                      {t.dayNames.map((d,idx)=>(
+                        <div key={idx} style={{width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,background:med.days.includes(idx)?`${med.color}28`:"var(--inputBg)",color:med.days.includes(idx)?med.color:"var(--border2)",border:`1px solid ${med.days.includes(idx)?med.color+"44":"var(--border)"}`}}>{d}</div>
+                      ))}
+                    </div>
+                    <div style={{marginTop:9,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                      {med.times.map(tm=>(
+                        <span key={tm} style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600,background:`${med.color}20`,color:med.color}}>{fmtTime(tm)}</span>
+                      ))}
+                      {typeof med.stock==="number" && (
+                        <span style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,marginLeft:"auto",background:med.stock<=5?"var(--dangerBg)":"var(--pill)",color:med.stock<=5?"var(--danger)":"var(--txt3)",border:`1px solid ${med.stock<=5?"var(--dangerBorder)":"var(--border)"}`}}>
+                          {med.stock<=5?"⚠️ ":"💊 "}{t.stockLabel}: {med.stock}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+        )}
+
+        {/* HISTORY */}
+        {view==="history" && <HistoryView meds={meds} history={history} t={t}/>}
+
+        {/* PROFILES */}
+        {view==="profiles" && (
+          <ProfilesView
+            profiles={profiles}
+            activeProfile={activeProfile}
+            onSwitch={id=>{setActiveProfile(id);setView("today");}}
+            onAdd={p=>setProfiles(prev=>[...prev,p])}
+            onDelete={id=>setProfiles(prev=>prev.filter(p=>p.id!==id))}
+            t={t}
+          />
+        )}
+
+      </main>
+
+      <button className="fab" onClick={()=>{setEditMed(null);setShowForm(true);}}>+</button>
+
+      {showForm && (
+        <MedForm
+          t={t}
+          initial={editMed ? {...editMed, time: editMed.times?.[0]||"08:00", stock: editMed.stock??""} : null}
+          onSave={saveMed}
+          onClose={()=>{setShowForm(false);setEditMed(null);}}
+        />
+      )}
+
+      {confirmId && confirmMed && (
+        <ConfirmDialog name={confirmMed.name} t={t}
+          onConfirm={()=>{setMeds(prev=>prev.filter(m=>m.id!==confirmId));setConfirmId(null);fire(t.toastRemoved);}}
+          onCancel={()=>setConfirmId(null)}/>
+      )}
+
+      {toast && <Toast msg={toast} leaving={toastLeave}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>
